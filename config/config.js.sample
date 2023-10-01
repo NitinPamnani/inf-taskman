@@ -1,0 +1,25 @@
+export default  {
+    database:{
+        user: '',
+        host: '',
+        database: '',
+        password: '',
+        port: 
+    },
+
+    application:{
+        port: 5001
+    },
+
+    jwtSigningOptions: {
+        issuer: 'inf-taskman',
+        subject: 'auth token for inf-taskman',
+        audience: 'taskman users',
+        expiresIn: '15d',
+        algorithm: "RS256"
+    },
+
+    tasks : {
+        pageSize: 15
+    }
+}

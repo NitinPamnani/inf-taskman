@@ -1,6 +1,7 @@
 import Task from "../entities/Task.js";
 import {v4 as uuid} from 'uuid';
 import * as db from '../../adapters/db_connectors/postgres/db.js'
+import config from "../../config/config.js";
 
 
 
@@ -28,8 +29,18 @@ async function getTaskContents(context) {
         return fileData
 }
 
+async function getTasks(context) {
+    const pageSize = config.tasks.pageSize;
+    const offset = (context.page - 1) * pageSize;
+    context["limit"] = pageSize;
+    context["offset"] = offset;
+
+    return await db.taskRepo.getTasks(context);
+}
+
 export {
     createNewTask,
     updateTask,
-    getTaskContents
+    getTaskContents,
+    getTasks
 }

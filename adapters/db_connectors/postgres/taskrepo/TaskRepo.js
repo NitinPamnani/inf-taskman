@@ -139,4 +139,29 @@ export default class TaskRepo {
             return {success:0, err:err}
         })
     }
+
+    async getTasks(context) {
+        return new Promise(async(resolve, reject) => {
+            try {
+                const psql = `SELECT title, description, status, owned_by, created_date, modified_date FROM "infeedtaskman"."task" WHERE owned_by = $1 LIMIT $2 OFFSET $3`;
+                const psqlParams = [context.owned_by, context.limit, context.offset]
+
+                const taskRes = await this.#db.query(psql, psqlParams);
+
+                if(taskRes && taskRes.rows) {
+                    resolve(taskRes.rows);
+                    return;
+                }
+
+                reject(taskRes);
+            } catch (err) {
+                console.log("Error while fetching tasks:" +err);
+                reject(err);
+            }
+        }).then(data => {
+            return {sucess:1, page:context.page, count:data.length, data:data}
+        }).catch(err => {
+            return {sucess:0, err:err}
+        })
+    }
 }
