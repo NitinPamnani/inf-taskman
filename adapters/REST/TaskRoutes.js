@@ -120,4 +120,25 @@ taskRouter.get('/s/:id', async(req, res) => {
     res.send(taskData);
 })
 
+taskRouter.get('/analytics/:timeframe', async(req,res) => {
+
+    const timeParam = req.params.timeframe;
+
+    const validateTimeParam = await validationUseCases.validateTimeframeParamForAnalytics(timeParam);
+    if(!validateTimeParam.success) {
+        res.send(validateTimeParam);
+        return;
+    }
+    
+    const action = validateTimeParam.action;
+
+    if(action == "MONTH") {
+         res.send(await taskUseCases.getAnalyticsForMonth(timeParam));
+    }else if (action == "RANGE") {
+        await taskUseCases.getAnalyticsForRangeOfPreviousMonths(timeParam);
+    } else {
+        res.send({success:0, err:"Action failure!"});
+    }
+})
+
 export default taskRouter

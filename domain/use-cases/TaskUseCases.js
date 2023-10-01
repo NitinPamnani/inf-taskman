@@ -4,6 +4,7 @@ import * as db from '../../adapters/db_connectors/postgres/db.js'
 import config from "../../config/config.js";
 
 
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"]
 
 async function createNewTask(context) {
 
@@ -36,9 +37,52 @@ async function getTasks(context) {
     return await db.taskRepo.getTasks(context);
 }
 
+async function getAnalyticsForMonth(month) {
+    const monIndex = months.indexOf(month)+1;
+    const getData = await db.taskRepo.getAnalyticsForMonth(monIndex);
+
+    if(!getData.success) {
+        return getData;
+    }
+
+    const data = getData.data;
+    const res = {
+        month: month,
+        metrics: {
+            open_tasks:0,
+            in_progress_tasks:0,
+            in_testing_tasks:0,
+            deployed_tasks:0,
+            completed_tasks:0
+        }
+    }
+
+    for(const task of data) {
+        if(task.new_field_value == "done") {
+            res.metrics.completed_tasks++;
+        } else if(task.new_field_value == "inprogress") {
+            res.metrics.in_progress_tasks++;
+        } else if(task.new_field_value == "testing") {
+            res.metrics.in_testing_tasks++;
+        } else if(task.new_field_value == "deployed") {
+            res.metrics.deployed_tasks++;
+        } else if(task.new_field_value == "tobedone") {
+            res.metrics.open_tasks++;
+        }
+    }
+
+    return res;
+}
+
+async function getAnalyticsForRangeOfPreviousMonths(range) {
+
+}
+
 export {
     createNewTask,
     updateTask,
     getTaskContents,
-    getTasks
+    getTasks,
+    getAnalyticsForMonth,
+    getAnalyticsForRangeOfPreviousMonths
 }

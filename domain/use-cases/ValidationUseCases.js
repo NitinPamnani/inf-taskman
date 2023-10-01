@@ -45,6 +45,33 @@ async function valAndPrepUpdateTaskContext(data) {
     return {success:1, data:res};
 }
 
+async function validateTimeframeParamForAnalytics(param) {
+
+    const supportedMonths = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug","Sep", "Oct", "Nov", "Dec"]
+
+    if(isNaN(param)) {
+        const isParamSupported = supportedMonths.includes(param);
+        if(!isParamSupported) {
+            return {succes:0, err:"For a specific month's data. Supported months are: "+supportedMonths.join(", ")};
+        }
+
+        return {success:1 , action:"MONTH"}
+
+    } else {
+        
+        if(!Number.isInteger(param)) {
+            return {success:0, err:"If you want previous months data as a timeline, please pass the number of months as an integer between 1-12"};
+        }
+
+        if(parseInt(param) > 12) {
+            return {sucess: 0, err:"Only past 12 months analytics is supported!"}
+        }
+
+        return {sucess:1, action:"RANGE"}
+    }
+}
+
 export {
-    valAndPrepUpdateTaskContext
+    valAndPrepUpdateTaskContext,
+    validateTimeframeParamForAnalytics
 }

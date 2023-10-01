@@ -10,7 +10,7 @@ export default class TaskRepo {
 
         let psql = 'INSERT INTO "infeedtaskman"."task_log" (id, task_id, action_user, date_logged, field_updated, old_field_value, new_field_value) ';
         let psqlParams = [];
-        if(oldValues.status && newValues.status) {
+        if(oldValues.status && newValues.status && (oldValues.status != newValues.status)) {
             psql += ` VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
             psqlParams = [uuid(), oldValues.id, oldValues.owned_by, newValues.modified_date, 'status', oldValues.status, newValues.status];
             return {query: psql, params: psqlParams};
@@ -161,5 +161,31 @@ export default class TaskRepo {
         }).catch(err => {
             return {sucess:0, err:err}
         })
+    }
+
+    async getAnalyticsForMonth(month) {
+        return new Promise(async(resolve, reject) => {
+            try {
+                const psql = `select distinct on (tl.task_id) tl.task_id, tl.id, tl.date_logged, tl.new_field_value from "infeedtaskman"."task_log" tl  where date_trunc('month', tl.date_logged) = $1  order by tl.task_id asc, tl.date_logged desc`;
+                const monthComplete = `2023-${month}-01`;
+                const psqlParam = [monthComplete];
+
+                const monthData = await this.#db.query(psql,psqlParam);
+
+                if(monthData && monthData.rows) {
+                    resolve(monthData.rows);
+                    return;
+                }
+
+                reject(monthData);
+            } catch(err) {
+                console.log("Error while fetching analytics! :"+err);
+                reject(err);
+            }
+        }).then(data => {
+            return {success:1, data:data};
+        }).catch(err=> {
+            return {success:0, err:err};
+        });
     }
 }
