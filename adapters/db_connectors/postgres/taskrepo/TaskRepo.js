@@ -1,0 +1,142 @@
+import {v4 as uuid} from 'uuid';
+export default class TaskRepo {
+    #db;
+
+    constructor(db) {
+        this.#db = db;
+    }
+
+    async #prepareTaskLogUpdateQuery(newValues, oldValues) {
+
+        let psql = 'INSERT INTO "infeedtaskman"."task_log" (id, task_id, action_user, date_logged, field_updated, old_field_value, new_field_value) ';
+        let psqlParams = [];
+        if(oldValues.status && newValues.status) {
+            psql += ` VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`;
+            psqlParams = [uuid(), oldValues.id, oldValues.owned_by, newValues.modified_date, 'status', oldValues.status, newValues.status];
+            return {query: psql, params: psqlParams};
+        } 
+        return null;
+    }
+
+    async #prepareTaskUpdateQuery(context) {
+
+        let psqlParams = [];
+        let psql = 'UPDATE "infeedtaskman"."task" SET ';
+
+        let iter = 1
+        for(const prop in context) {
+            if (prop != "taskId" && context[prop]) {
+                psql += `${prop} = $${iter},`
+                psqlParams.push(context[prop]);
+                iter++;
+            }
+        }
+
+        //remove the last comma
+        psql = psql.substring(0, psql.length-1);
+
+        psql += ` WHERE id = $${iter}`
+        psqlParams.push(context.taskId);
+
+        return {query: psql, params: psqlParams};
+
+    }
+
+    async createNewTask(taskObject) {
+        return new Promise(async(resolve, reject) => {
+            try {
+                const res = await this.#db.query('INSERT INTO "infeedtaskman"."task" (id, created_date, modified_date, description, status, created_by, owned_by, title) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+                [
+                 taskObject.taskId, 
+                 taskObject.created_date,
+                 taskObject.modified_date,
+                 taskObject.description,
+                 taskObject.status,
+                 taskObject.created_by,
+                 taskObject.owned_by,
+                 taskObject.title 
+                ])
+                if(res.rows && res.rows[0].id) {
+                    resolve(res.rows[0]);
+                    return;
+                }
+                reject(res);
+            } catch (err) {
+                console.log("Error occurred while creating a new file: "+err);
+                reject(err);
+                //return;
+            }
+        }).then(data => {
+            return {success:1, data:data}
+        }).catch(err => {
+            return {success:0, err:err}
+        })
+    }
+
+    async updateTask(context) {
+        return new Promise(async(resolve, reject) => {
+            try {
+
+                /*
+                  Fetch the task first then, prepare the data for logs, update the task, then update logs
+                 */
+
+                const fetchTask = await this.#db.query('SELECT * FROM "infeedtaskman"."task" WHERE id=$1',[context.taskId]);
+                
+                if(!fetchTask || !fetchTask.rows[0]) {
+                    reject("No task details found for the task!");
+                    return;
+                }
+
+                const taskOldValues = fetchTask.rows[0];
+
+                const updateQueryAndParams = await this.#prepareTaskUpdateQuery(context);
+                const res =  await this.#db.query(updateQueryAndParams.query, updateQueryAndParams.params);
+
+
+                const updateTaskLogQueryAndParams = await this.#prepareTaskLogUpdateQuery(context, taskOldValues);
+                if(updateTaskLogQueryAndParams) {
+                  this.#db.query(updateTaskLogQueryAndParams.query, updateTaskLogQueryAndParams.params);
+                }
+
+                if(res && res.rowCount) {
+                    resolve(res);
+                    return;
+                }
+                reject(res);                    
+            } catch (err) {
+                console.log("Error occurred while updating file! "+err)
+                console.log("TaskObjectForupdate: "+context)
+                reject(err);
+            }
+        }).then(data => {
+            return {success:1, data:data}
+        }).catch(err => {
+            return {success:0, err:err}
+        })
+    }
+
+    async getTaskContents(context) {
+        return new Promise(async(resolve, reject) => {
+            try {
+                const res =  await this.#db.collection('files').findOne(
+                    context
+                )
+
+                if(res && res._id) {
+                    resolve(res);
+                    return;
+                }
+                reject(res);                    
+            } catch (err) {
+                console.log("Error occurred while updating file! "+err)
+                console.log("FileObject: "+context)
+                reject(err);
+            }
+        }).then(data => {
+            return {success:1, data:data}
+        }).catch(err => {
+            return {success:0, err:err}
+        })
+    }
+}

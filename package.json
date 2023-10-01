@@ -1,0 +1,23 @@
+{
+  "name": "inf-taskman",
+  "version": "1.0.0",
+  "description": "\"Task management system\"",
+  "main": "taskmanager.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon taskmanager.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@personal-github.com:NitinPamnani/inf-taskman.git"
+  },
+  "author": "Nitin Pamnani",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "uuid": "^9.0.1"
+  }
+}
