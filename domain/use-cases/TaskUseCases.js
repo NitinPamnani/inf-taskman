@@ -57,6 +57,68 @@ async function getAnalyticsForMonth(month) {
         }
     }
 
+    await populateMetrics(data, res);
+
+    return res;
+}
+
+async function getAnalyticsForRangeOfPreviousMonths(range) {
+    const currDate = new Date();
+    const currMonth = currDate.getMonth();
+    const minMonth = (currMonth - range) >= 0 ? (currMonth - range) : 0;
+    const maxMonth = currMonth - 1;
+
+    const getData = await db.taskRepo.getAnalyticsForRangeOfPreviousMonths(minMonth, maxMonth);
+
+    if(!getData.success) {
+        return getData;
+    }
+
+    const data = getData.data;
+    const monthWiseData = await filterMonthWiseData(data, minMonth, maxMonth);
+    const res = {
+        data:[]
+    }
+
+
+
+    for(const month in monthWiseData) {
+        const monthRes = {
+            month: months[month],
+            metrics: {
+                open_tasks:0,
+                in_progress_tasks:0,
+                in_testing_tasks:0,
+                deployed_tasks:0,
+                completed_tasks:0
+            }
+        }
+        await populateMetrics(monthWiseData[month], monthRes);
+        res.data.push(monthRes);
+    }
+
+    return res;
+
+}
+
+async function filterMonthWiseData(data, minMonth, maxMonth) {
+
+    const monthWiseData = {}
+    for(let iter = minMonth; iter <= maxMonth; iter++) {
+        monthWiseData[iter] = [];
+    }
+
+    for(const task of data) {
+        const taskDate = new Date(task.date_logged);
+        const taskMonth = taskDate.getMonth();
+        monthWiseData[taskMonth].push(task);
+    }
+
+    return monthWiseData;
+}
+
+async function populateMetrics(data, res) {
+
     for(const task of data) {
         if(task.new_field_value == "done") {
             res.metrics.completed_tasks++;
@@ -69,12 +131,7 @@ async function getAnalyticsForMonth(month) {
         } else if(task.new_field_value == "tobedone") {
             res.metrics.open_tasks++;
         }
-    }
-
-    return res;
-}
-
-async function getAnalyticsForRangeOfPreviousMonths(range) {
+    }   
 
 }
 

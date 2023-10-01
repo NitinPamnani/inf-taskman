@@ -135,7 +135,7 @@ taskRouter.get('/analytics/:timeframe', async(req,res) => {
     if(action == "MONTH") {
          res.send(await taskUseCases.getAnalyticsForMonth(timeParam));
     }else if (action == "RANGE") {
-        await taskUseCases.getAnalyticsForRangeOfPreviousMonths(timeParam);
+        res.send(await taskUseCases.getAnalyticsForRangeOfPreviousMonths(timeParam));
     } else {
         res.send({success:0, err:"Action failure!"});
     }

@@ -188,4 +188,31 @@ export default class TaskRepo {
             return {success:0, err:err};
         });
     }
+
+    async getAnalyticsForRangeOfPreviousMonths(minMonth, maxMonth) {
+        return new Promise(async(resolve, reject) => {
+            try {
+                const psql = `select distinct on (tl.task_id) tl.task_id, tl.id, tl.date_logged, tl.new_field_value from "infeedtaskman"."task_log" tl  where date_trunc('month', tl.date_logged) >= $1 AND date_trunc('month', tl.date_logged) <= $2 order by tl.task_id asc, tl.date_logged desc`;
+                const minMonthComplete = `2023-${minMonth+1}-01`;
+                const maxMonthComplete = `2023-${maxMonth+1}-01`;
+                const psqlParam = [minMonthComplete, maxMonthComplete];
+
+                const rangeData = await this.#db.query(psql,psqlParam);
+
+                if(rangeData && rangeData.rows) {
+                    resolve(rangeData.rows);
+                    return;
+                }
+
+                reject(rangeData);
+            } catch(err) {
+                console.log("Error while fetching analytics! :"+err);
+                reject(err);
+            }
+        }).then(data => {
+            return {success:1, data:data};
+        }).catch(err=> {
+            return {success:0, err:err};
+        });
+    }
 }

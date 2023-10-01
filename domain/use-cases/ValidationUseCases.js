@@ -59,15 +59,15 @@ async function validateTimeframeParamForAnalytics(param) {
 
     } else {
         
-        if(!Number.isInteger(param)) {
-            return {success:0, err:"If you want previous months data as a timeline, please pass the number of months as an integer between 1-12"};
+        if(!Number.isInteger(parseInt(param))) {
+            return {success:0, err:"If you want previous months data as a timeline, please pass the number of months as an integer between 1-12."};
         }
 
         if(parseInt(param) > 12) {
-            return {sucess: 0, err:"Only past 12 months analytics is supported!"}
+            return {success: 0, err:"Only past 12 months analytics is supported!"}
         }
 
-        return {sucess:1, action:"RANGE"}
+        return {success:1, action:"RANGE"}
     }
 }
 
