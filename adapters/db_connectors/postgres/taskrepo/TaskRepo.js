@@ -119,18 +119,16 @@ export default class TaskRepo {
     async getTaskContents(context) {
         return new Promise(async(resolve, reject) => {
             try {
-                const res =  await this.#db.collection('files').findOne(
-                    context
-                )
+                const res =  await this.#db.query('SELECT title, description, status FROM "infeedtaskman"."task" WHERE owned_by = $1 AND id = $2', [context.owned_by, context.id]);
 
-                if(res && res._id) {
-                    resolve(res);
+                if(res && res.rows) {
+                    resolve(res.rows[0]);
                     return;
                 }
                 reject(res);                    
             } catch (err) {
                 console.log("Error occurred while updating file! "+err)
-                console.log("FileObject: "+context)
+                console.log("Task Object: "+context)
                 reject(err);
             }
         }).then(data => {

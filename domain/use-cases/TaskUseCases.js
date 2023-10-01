@@ -22,11 +22,9 @@ async function updateTask(context) {
 }
 
 async function getTaskContents(context) {
-
-        const query = {fileId: context.fileId, owner_id: context.ownerId}
-
-        const fileData = await db.taskRepo.getTaskContents(query);
-        return fileData
+     
+    const taskData = await db.taskRepo.getTaskContents(context);
+    return taskData;
 }
 
 async function getTasks(context) {

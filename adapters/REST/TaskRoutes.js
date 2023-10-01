@@ -99,4 +99,25 @@ taskRouter.get('/s', async(req, res) => {
     res.send(tasksData);
 })
 
+taskRouter.get('/s/:id', async(req, res) => {
+    const taskId = req.params.id;
+    const token = req.body.token ? req.body.token : null;
+
+    const tokenPayload = await authUseCases.validateJWT(token);
+    
+    if(!tokenPayload.success) {
+        res.send({success:0, err:tokenPayload.err});
+    }
+
+    const userData = tokenPayload.data;
+    const userId = userData.userId;
+    const context = {
+        owned_by: userId,
+        id:taskId
+    }
+
+    const taskData = await taskUseCases.getTaskContents(context);
+    res.send(taskData);
+})
+
 export default taskRouter
