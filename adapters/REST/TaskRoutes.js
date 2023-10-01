@@ -47,6 +47,7 @@ taskRouter.put('/', async(req, res) => {
     
     if(!tokenPayload.success) {
         res.send({success:0, err:tokenPayload.err});
+        return;
     }
 
     const userData = tokenPayload.data;
@@ -86,6 +87,7 @@ taskRouter.get('/s', async(req, res) => {
     
     if(!tokenPayload.success) {
         res.send({success:0, err:tokenPayload.err});
+        return;
     }
 
     const userData = tokenPayload.data;
@@ -107,6 +109,7 @@ taskRouter.get('/s/:id', async(req, res) => {
     
     if(!tokenPayload.success) {
         res.send({success:0, err:tokenPayload.err});
+        return;
     }
 
     const userData = tokenPayload.data;
@@ -123,6 +126,15 @@ taskRouter.get('/s/:id', async(req, res) => {
 taskRouter.get('/analytics/:timeframe', async(req,res) => {
 
     const timeParam = req.params.timeframe;
+
+    const token = req.body.token ? req.body.token : null;
+
+    const tokenPayload = await authUseCases.validateJWT(token);
+    
+    if(!tokenPayload.success) {
+        res.send({success:0, err:tokenPayload.err});
+        return;
+    }
 
     const validateTimeParam = await validationUseCases.validateTimeframeParamForAnalytics(timeParam);
     if(!validateTimeParam.success) {
